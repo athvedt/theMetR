@@ -1,0 +1,127 @@
+---
+title: "theMetR"
+author: "Andrew Thvedt"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{theMetR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(theMetR)
+```
+
+## Introduction to theMetR
+theMetR is an R wrapper for the Metropolitan Museum's API. The Metropolitan Museum is one of the worlds largest art museums. Located in New York City on Fifth Avenue, the Met is home to numerous galleries and special exhibitions and was visited by over 7 million people in the last year. This package includes multiple functions that will help you explore the Met's Open Access Database. The Met API is simple, which means it is fairly straightforward to interact with but this also makes it difficult to gather larger amounts of data at once. The Met API allows a user to search for objects, but returns no information other than the number of objects that match the search criteria and their objectIDs. Gathering data on the objects in the search requires another query and must be done for individually for each object. This package addresses these issues, making it simple for the user to download the data they want. This vignette introduces you to theMetR's functions, briefly explains how they work, what information they retrieve, and provides a few examples of how this package can be used.
+
+## API Access
+At this time, no authentication is required to access the Metropolitan Museum API. The user can simply download theMetR package and begin to access information from the API.
+
+## Basic Functions
+theMetR provides the user with four functions to access information from the Met's API. These functions are: `all_Met_objects()`, `get_Met_object_info()`, `get_department_IDs()`, and `search_Met_objects()`. The first three functions are designed to help a user explore the main features of the Metropolitan Museum Open Access Database and retrieve basic information. The fourth, `search_Met_objects()`, provides extensive ways of filtering searches and downloading larger, but manageable, amounts of relevant data.
+
+## `all_Met_objects()`
+The `all_Met_objects()` function provides a brief overview of the state of the Met's Open Access Database. Simply calling the function without any parameters will tell you how many objects are currently in the database. Using the parameters, the user can also request a list of these objectIDs and limit the number of responses. For example, let's simply see how many objects are available for search at this time.
+
+```{r}
+all_Met_objects()
+```
+
+Setting `include_IDs` to `TRUE` will include a list of these objectIDs in the output. For this example, let's limit the number of objectIDs returned to the first 100.
+
+```{r}
+all_Met_objects(limit = 100, include_IDs = TRUE)
+```
+
+## Retrieving object data with `get_Met_object_info()`
+Once the user has some objectIDs, the `get_Met_object_info()` function can be used to gather information about an object. For example, let's get data on the first object in the Met Database. Use the `get_Met_object_info()` function to search for data on a single object by objectID.
+
+```{r, eval = FALSE}
+get_Met_object_info(objectID = 1)
+```
+
+```{r, echo = FALSE}
+knitr::kable(get_Met_object_info(objectID = 1))
+```
+
+What if the user wants to know what an object looks like? By setting the `download_image` argument to `TRUE`, the function will download the primary image from the Met's database into the current working directory. For example, let's get an image of the object 100 in the database.
+
+```{r, eval = FALSE}
+get_Met_object_info(objectID = 100, download_image = TRUE)
+```
+
+```{r, echo = FALSE}
+knitr::kable(get_Met_object_info(objectID = 100, download_image = TRUE))
+```
+
+
+## Understanding departments with `get_department_IDs()`
+The Met Museum has multiple departments throughout the institution. To see what departments exist, and retrieve their DepartmentIDs, use the `get_department_IDs()` function. The DepartmentIDs will be useful for the next function.
+
+```{r}
+get_department_IDs()
+```
+
+## Searching for multiple objects and their data with `search_Met_objects()`
+The `search_Met_objects()` function makes it easy for users to search for objects in the Met Open Access Database that meet the search parameters, filter and retrieve data on these objects, and even download images. This function takes advantage of two features in the Met's API. First, the Met API allows users to search for objects matching a query string and eight other parameters. However, the only information returned by this search is a list of the objectIDs that match the search criteria. No other information, such as Author, Title, Description, etc. that is relevant to a user is returned. This type of information is available from the Met API, but can only be searched one object at a time. The `search_Met_objects()` is designed to allow the user to overcome this limitation, and search for, and gather, information on multiple objects simultaneously. 
+
+Before showing a few examples, there are two aspects of this function to note. First, since querying data on objects must be done *individually*, please expect this function to take time to run, especially if the `limit` parameter is set to a higher value. Second, this function also automatically cleans the data for the user, removing variables that are not useful, contribute to bloat, or are misformatted in the Met Database. For example, certain objects have links for more than ten "additional images," which are not typically relevant for a user and would contribute to a data.frame with significant missingness if included, as all the other objects in the data.frame would have empty values for these variables. If the user wants the complete, unfiltered, and potentially messy data on an single object, the `get_Met_object_info()` function does not filter the data.
+
+### `search_Met_objects()` example #1: da Vinci
+
+The user should be aware that the `q` argument searches for *any* objects in the *entire* database that have the search term *anywhere* in their data. There is an exception, which will be explained below, but to illustrate the importance of this please see this excample. Let's first search for "da Vinci". The default `limit` is set to 5, which means only the first five objects that match the search criteria will have data included in the output.
+
+```{r, eval = FALSE}
+search_Met_objects(q = "da Vinci")
+```
+
+```{r, echo = FALSE}
+knitr::kable(search_Met_objects(q = "da Vinci"))
+```
+
+219 objects match these search parameters and information on the first five are included in a data.frame. Looking through this, it appears that the fourth object is not a da Vinci piece, but rather the work of Rembrandt. Some further digging reveals it was included in this search because the *title* of the object, "The Last Supper, after Leonardo da Vinci," includes the string specified in the `q` argument. If the user was only interested in works of art where da Vinci is the *artist*, the `artistOrCulture` argument must be used. If set to `TRUE`, the `artistOrCulture` argument limits the search string in the `q` parameter to the "Artist" or "Culture" fields *only*. This is particularly useful if we are searching for a specific artist or art from a certain culture. For example, to search for objects where da Vinci is the artist, the code should be:
+
+```{r, eval = FALSE}
+search_Met_objects(q = "da Vinci", artistOrCulture = TRUE)
+```
+
+```{r, echo = FALSE}
+knitr::kable(search_Met_objects(q = "da Vinci", artistOrCulture = TRUE))
+```
+
+Looking through results of this search, it is clear that these are all objects where da Vinci is the artist.
+
+### `search_Met_objects()` example #2: dogs
+
+If the user wants to see the number of objects related to dogs in the database, the function can be run with`q` = `dog`. In order to search for the number of objects, but not retrieve any data, the `limit` parameter is set to `0`.
+
+```{r}
+search_Met_objects(q = "dog", limit = 0)
+```
+
+This search can be made more specific using the `medium` argument, which returns objects that are of the specified medium. What if the user is considering visiting the Met Museum and is only interested in *paintings* that are *currently on display*. If set to `TRUE`, the `isOnView` argument limits the search to objects that are currently on display. In this example, the `isHighlight` argument is also set to `TRUE`, which includes objects that are specially designated by the museum.
+```{r}
+search_Met_objects(q = "dog", limit = 0, medium = "Paintings", isOnView = TRUE, isHighlight = TRUE)
+```
+
+17 objects matched these search parameters. Using the `dateBegin` and `dateEnd` arguments, the user can also see how many of these objects are dated between 1800 and 2000. Note: the Met API requires both the `dateBegin` and `dateEnd` arguments to be used together, so the function will not run if only one of these arguments is specified without the other. By setting the `limit` to `10`, the function limits the data retrieved to the first ten. Setting `download_images` to `TRUE` would also download the primary image of the objects which the function is returning data on.
+
+```{r, eval = FALSE}
+search_Met_objects(q = "dog", limit = 10, medium = "Paintings", isOnView = TRUE, isHighlight = TRUE, dateBegin = 1800, dateEnd = 2000)
+```
+
+```{r, echo = FALSE}
+knitr::kable(search_Met_objects(q = "dog", limit = 10, medium = "Paintings", isOnView = TRUE, isHighlight = TRUE, dateBegin = 1800, dateEnd = 2000))
+```
+
+Only five objects met these search parameters. Since the limit was set at 10, data on all five objects was returned.
+
+These are a few examples of how the functions in theMetR package might be used. To see a full explanation of the search parameters, please see the documentation by running `?search_Met_objects()`. Future versions of the package might expand the filtering parameters for the `?search_Met_objects()` function and provide some visualization tools. Any feedback is appreciated. Thank you for using theMetR package.

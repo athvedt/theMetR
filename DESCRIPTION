@@ -1,0 +1,22 @@
+Package: theMetR
+Type: Package
+Title: Provides Easy Access to the Metropolitan Museum's Open Access API
+Version: 0.1.0
+Author: Andrew Thvedt
+Maintainer: Andrew Thvedt <a.thvedt@columbia.edu>
+Description: theMetR is an R wrapper for the Metropolitan Museum's API. This package includes multiple functions that will help you explore the Met's Open Access Database. The Met API is simple, which means it is fairly straightforward to interact with but this also makes it difficult to gather larger amounts of data at once. The Met API allows a user to search for objects that match its search criteria, but returns no other information other than the number of objects and their objectIDs. Gathering data on the objects in the search requires another query and must be done for individually for each object. This package addresses these issues, making it simple for the user to download the data they want. Below, you will find a few examples of what this package  can do.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    httr,
+    dplyr,
+    magrittr,
+    tibble,
+    tidyr
+RoxygenNote: 7.0.2
+Suggests: 
+    testthat (>= 2.1.0),
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
